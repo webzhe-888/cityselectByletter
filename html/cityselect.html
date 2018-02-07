@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<title>城市列表</title>
+	<link rel="stylesheet" type="text/css" href="../css/reset.css"/>
+	<link rel="stylesheet" type="text/css" href="../css/main.css"/>
+</head>
+<body>
+	<!--顶部搜索框-->
+	<div class="search-wrap">
+		<span class="search-back">
+			<img src="../img/back-left.png"/>
+		</span>
+		<div class="search-input">
+			<form action="" enctype='application/json' onsubmit="return false;">
+				<input type="search" placeholder="请输入" id="search" autocomplete="off" class="search-main" />
+				<span class="search-icon"><img src="../img/search.png"/></span>
+			</form>
+		</div>
+		<span class="search-cancle">取消</span>
+	</div>
+	<!--输入框内容-->
+	<div class="search-content"></div>
+	<!--右侧悬浮框-->
+	<div class="memory">
+		<span class="memory-letter">A</span>
+	</div>
+	<!--显示点击的是哪一个字母-->
+	<div id="showLetter" class="showLetter">
+		<span>A</span>
+	</div>
+	<!--城市索引查询-->
+	<div class="letter">
+	    <ul>
+	      <li class="active"><span>A</span></li>
+	      <li><span>B</span></li>
+	      <li><span>C</span></li>
+	      <li><span>D</span></li>
+	      <li><span>E</span></li>
+	      <li><span>F</span></li>
+	      <li><span>G</span></li>
+	      <li><span>H</span></li>
+	      <li><span>J</span></li>
+	      <li><span>K</span></li>
+	      <li><span>L</span></li>
+	      <li><span>M</span></li>
+	      <li><span>N</span></li>
+	      <li><span>P</span></li>
+	      <li><span>Q</span></li>
+	      <li><span>R</span></li>
+	      <li><span>S</span></li>
+	      <li><span>T</span></li>
+	      <li><span>W</span></li>
+	      <li><span>X</span></li>
+	      <li><span>Y</span></li>
+	      <li><span>Z</span></li>
+	    </ul>
+	</div>
+	<!--城市列表-->
+	<div class="container">
+		<!--当前位置-->
+		<div class="city-wrap local-city">
+			<p class="city-title local-tip">当前位置</p>
+			<div class="city-area local-area">
+				<span class="homewrap"><img src="../img/greenhome.png"/></span>
+				<span class="city-main local-main"></span>
+			</div>
+		</div>
+		<!--GPS定位城市-->
+		<div class="city-wrap gps-city">
+			<p class="city-title gps-tip">GPS定位城市</p>
+			<div class="city-area gps-area">
+				<span  class="homewrap"><img src="../img/greenlocal.png"/></span>
+				<span class="city-main gps-main">北京市</span>
+			</div>
+		</div>
+		<!--全部城市-->
+		<div class="city-wrap city"></div>
+	</div>
+</body>
+<script src="../js/flexible.js" type="text/javascript" charset="utf-8"></script>
+<script src="../lib/jquery-2.1.1.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="../js/jweixin-1.2.0.js" type="text/javascript" charset="utf-8"></script>
+<script type="text/javascript">
+	//获取数据
+	$.get("../mook/data.json", function(data) {
+		if (data.code == 0) {
+			var len = data.data.length;
+			var html = '';
+			for(var i=0 ;i< len;i++){
+				var th = data.data[i];
+				var detailLen = th.list.length;
+				var txt = '';
+				for (var j = 0; j < detailLen;j++) {
+					txt += '<p class="city-main">' + th.list[j].name + '</p>';
+				}
+				html += '<div class="city-list">'
+				+'<div class="city-letter city-title" id="'+ data.data[i].initial + '">'+ data.data[i].initial + '</div>'
+				+ txt
+				+'</div>';
+			}
+			$('.city').html('').append(html);
+		}
+	}, 'json');
+	//选择城市
+	var localcity =  sessionStorage.getItem('local');
+	if (localcity == undefined) {
+		$('.local-city').hide();
+	}else{
+		$('.local-city').show();
+		$('.local-main').text(localcity);
+	}
+	//定位城市
+	var gps = sessionStorage.getItem('gps'); 
+	if(gps == undefined){
+		$('.gps-city').hide();
+	}else{
+		$('.gps-city').show();
+		$('.gps-main').text(gps);
+	}
+	//返回上一页
+	$('.search-back').on('click',function(){
+		location.href = history.go(-1);
+		self.location=document.referrer;
+	})
+	//定位城市
+    $('.gps-city').on('click',function(){
+    	sessionStorage.setItem('local',$('.gps-main').html());
+        location.href = history.go(-1);
+		self.location=document.referrer;
+    });
+	//选择城市 start
+    $('body').on('click', '.city-list p', function () {
+    	sessionStorage.setItem('local',$(this).html());
+        location.href = history.go(-1);
+		self.location=document.referrer;
+    });
+    $('body').on('click', '.search-content p', function () {
+    	sessionStorage.setItem('local',$(this).html());
+        location.href = history.go(-1);
+		self.location=document.referrer;
+    });
+    //右侧导航选择字母
+     $('.letter').on('click','li',function () {
+        var s = $(this).find('span').html();
+        $(this).addClass('active').siblings().removeClass('active');
+        $(window).scrollTop($('#' + s + '').offset().top);
+        $('.memory-letter').text(s);
+        $("#showLetter span").html(s);
+        $("#showLetter").show();
+        setTimeout(function(){
+        	$("#showLetter").hide(500);
+        },500);
+		$(document).unbind('scroll');
+		//window的滚动调用下面的滚动时间，需要去除滚动，然后再添加滚动
+		setTimeout(function () { 
+		 	scrollFn();
+		}, 500);
+        return false;
+    });
+    ScrollTop();
+    scrollFn();
+	function scrollFn(){
+	    $(document).on('scroll', function(){
+	    	//滚动判断是否是列表页显示的
+	    	if($('.container').css("display") == "block"){
+				var len = $('.city-letter').length;
+				var memory = $('.memory').height();
+				var hot = $('.hot-city').height();
+				var search = $('.search-wrap').height();
+				if($('.local-city').css("display") == "none"){
+					var local = 0;
+				}else{
+					var local = $('.local-city').height();
+				}
+				if($('.gps-city').css("display") == "none"){
+					var gps = 0;
+				}else{
+					var gps = $('.gps-city').height();
+				}
+				var liItem = $('.letter ul li');
+				var a = $('.city-list').eq(0).height() + $('.city-list').eq(0).offset().top;
+				var b = $('.city-list').eq(1).height() + $('.city-list').eq(1).offset().top;
+				var c = $('.city-list').eq(2).height() + $('.city-list').eq(2).offset().top;
+				var d = $('.city-list').eq(3).height() + $('.city-list').eq(3).offset().top;
+				var e = $('.city-list').eq(4).height() + $('.city-list').eq(4).offset().top;
+				var f = $('.city-list').eq(5).height() + $('.city-list').eq(5).offset().top;
+				var g = $('.city-list').eq(6).height() + $('.city-list').eq(6).offset().top;
+				var h = $('.city-list').eq(7).height() + $('.city-list').eq(7).offset().top;
+				var j = $('.city-list').eq(8).height() + $('.city-list').eq(8).offset().top;
+				var k = $('.city-list').eq(9).height() + $('.city-list').eq(9).offset().top;
+				var l = $('.city-list').eq(10).height() + $('.city-list').eq(10).offset().top;
+				var m = $('.city-list').eq(11).height() + $('.city-list').eq(11).offset().top;
+				var n = $('.city-list').eq(12).height() + $('.city-list').eq(12).offset().top;
+				var p = $('.city-list').eq(13).height() + $('.city-list').eq(13).offset().top;
+				var q = $('.city-list').eq(14).height() + $('.city-list').eq(14).offset().top;
+				var r = $('.city-list').eq(15).height() + $('.city-list').eq(15).offset().top;
+				var s = $('.city-list').eq(16).height() + $('.city-list').eq(16).offset().top;
+				var t = $('.city-list').eq(17).height() + $('.city-list').eq(17).offset().top;
+				var w = $('.city-list').eq(18).height() + $('.city-list').eq(18).offset().top;
+				var x = $('.city-list').eq(19).height() + $('.city-list').eq(19).offset().top;
+				var y = $('.city-list').eq(20).height() + $('.city-list').eq(20).offset().top;
+				var z = $('.city-list').eq(21).height() + $('.city-list').eq(21).offset().top;
+				var Top = $(document).scrollTop();
+				if(Top > search + local + gps){
+					$('.memory').show();
+					$('.memory').css({'position':'fixed','top':'0'});
+				}else{
+					$('.memory').css({'position':'static'});
+					$('.memory').hide();			
+				}
+				if(Top < a){
+					$('.memory-letter').text('A');
+					liItem.eq(0).addClass('active').siblings().removeClass('active');
+				}else if(Top >= a && Top < b){
+					$('.memory-letter').text('B');
+					liItem.eq(1).addClass('active').siblings().removeClass('active');
+				}else if(Top >= b && Top < c){
+					$('.memory-letter').text('C');
+					liItem.eq(2).addClass('active').siblings().removeClass('active');
+				}else if(Top >= c && Top < d){
+					$('.memory-letter').text('D');
+					liItem.eq(3).addClass('active').siblings().removeClass('active');
+				}else if(Top >= d && Top < e){
+					$('.memory-letter').text('E');
+					liItem.eq(4).addClass('active').siblings().removeClass('active');
+				}else if(Top >= e && Top < f){
+					$('.memory-letter').text('F');
+					liItem.eq(5).addClass('active').siblings().removeClass('active');
+				}else if(Top >= f && Top < g){
+					$('.memory-letter').text('G');
+					liItem.eq(6).addClass('active').siblings().removeClass('active');
+				}else if(Top >= g && Top < h){
+					$('.memory-letter').text('H');
+					liItem.eq(7).addClass('active').siblings().removeClass('active');
+				}else if(Top >= h && Top < j){
+					$('.memory-letter').text('J');
+					liItem.eq(8).addClass('active').siblings().removeClass('active');
+				}else if(Top >= j && Top < k){
+					$('.memory-letter').text('K');
+					liItem.eq(9).addClass('active').siblings().removeClass('active');
+				}else if(Top >= k && Top < l){
+					$('.memory-letter').text('L');
+					liItem.eq(10).addClass('active').siblings().removeClass('active');
+				}else if(Top >= l && Top < m){
+					$('.memory-letter').text('M');
+					liItem.eq(11).addClass('active').siblings().removeClass('active');
+				}else if(Top >= m && Top < n){
+					$('.memory-letter').text('N');
+					liItem.eq(12).addClass('active').siblings().removeClass('active');
+				}else if(Top >= n && Top < p){
+					$('.memory-letter').text('P');
+					liItem.eq(13).addClass('active').siblings().removeClass('active');
+				}else if(Top >= p && Top < q){
+					$('.memory-letter').text('Q');
+					liItem.eq(14).addClass('active').siblings().removeClass('active');
+				}else if(Top >= q && Top < r){
+					$('.memory-letter').text('R');
+					liItem.eq(15).addClass('active').siblings().removeClass('active');
+				}else if(Top >= r && Top < s){
+					$('.memory-letter').text('S');
+					liItem.eq(16).addClass('active').siblings().removeClass('active');
+				}else if(Top >= s && Top < t){
+					$('.memory-letter').text('T');
+					liItem.eq(17).addClass('active').siblings().removeClass('active');
+				}else if(Top >= t && Top < w){
+					$('.memory-letter').text('W');
+					liItem.eq(18).addClass('active').siblings().removeClass('active');
+				}else if(Top >= w && Top < x){
+					$('.memory-letter').text('X');
+					liItem.eq(19).addClass('active').siblings().removeClass('active');
+				}else if(Top >= x && Top < y){
+					$('.memory-letter').text('Y');
+					liItem.eq(20).addClass('active').siblings().removeClass('active');
+				}else if(Top >= y && Top < z){
+					$('.memory-letter').text('Z');
+					liItem.eq(21).addClass('active').siblings().removeClass('active');
+				}
+		    }
+		});
+	}
+    //页面滑到顶部
+	function ScrollTop(){ 
+		document.body.scrollTop = 0;
+		document.documentElement.scrollTop = 0;
+		return false;
+	}
+	//搜索
+    $('#search').on('focus',function(){
+    	$('.container').hide();
+    	$('.memory').hide();
+    	$('.letter').hide();
+    	$('.search-content').show().text('');
+    	//获取焦点内容不为空
+    	var str = $('#search').val().trim();
+    	var len = $('.container').find('p').length;
+    	var flag = false;
+    	if(str== ''){
+    		return false;
+    	}
+        for(var i=0;i<len;i++){
+            var content = $('.container').find('p').eq(i).text();
+            if(content.indexOf(str) >= 0){
+                $('.search-content').append($('.container').find('p').eq(i).clone());
+	            flag = true;
+            }
+        }
+        if(flag == false){
+        	var noStr = "<span>抱歉，未找相应位置，可尝试修改后重试</span>";
+        	$('.search-content').append(noStr);
+        }
+        event.preventDefault(); 
+    });
+    //取消
+    $('.search-cancle').on('click',function(){
+    	$('#search').val('');
+    	$('.container').show();
+    	//$('.memory').show();
+    	$('.letter').show();
+    	$('.search-content').hide();
+    	var Top = $(document).scrollTop(); 
+    	if(Top > 50){
+			$('.memory').show();
+			$('.memory').css({'position':'fixed','top':'0'});
+		}else{
+			$('.memory').css({'position':'static'});
+			$('.memory').hide();			
+		}
+    });
+    $("#search").on('input propertychange',function(){
+		$('.container').hide();
+    	$('.memory').hide();
+    	$('.letter').hide();
+    	$('.search-content').show();
+		$('.search-content').text(' ');
+    	var str = $('#search').val().trim();
+    	var len = $('.container').find('p').length;
+    	var flag = false;
+    	if(str== ''){
+    		return false;
+    	}
+        for(var i=0;i<len;i++){
+            var content = $('.container').find('p').eq(i).text();
+            if(content.indexOf(str) >= 0){
+                $('.search-content').append($('.container').find('p').eq(i).clone());
+	            flag = true;
+            }
+        }
+        if(flag == false){
+        	var noStr = "<span>抱歉，未找相应位置，可尝试修改后重试</span>";
+        	$('.search-content').append(noStr);
+        }
+        event.preventDefault(); 
+	});
+</script>
+</html>

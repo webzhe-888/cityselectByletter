@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>首页</title>
+		<link rel="stylesheet" type="text/css" href="css/reset.css"/>
+		<link rel="stylesheet" type="text/css" href="css/main.css"/>
+	</head>
+	<body>
+		<header class="header">
+			<div class="address">
+				<img src="img/indexposition.png"/>
+			</div>
+			<div class="location-area">北京市</div>
+		</header>
+	</body>
+	<script src="js/flexible.js" type="text/javascript" charset="utf-8"></script>
+	<script src="lib/zepto.min.js" type="text/javascript" charset="utf-8"></script>
+	<script src="js/jweixin-1.2.0.js" type="text/javascript" charset="utf-8"></script>
+	<script type="text/javascript">
+	$(function(){
+		var local = sessionStorage.getItem('local');
+		if(local == null || local == undefined){
+			wx.ready(function(){
+				//判断浏览器是否支持获取地理位置
+				wx.getLocation({
+					//获得定位成功
+				    success: function (res) {
+				        var latitude = res.latitude; // 纬度，浮点数，范围为90 ~ -90
+				        var longitude = res.longitude; // 经度，浮点数，范围为180 ~ -180。
+				        var speed = res.speed; // 速度，以米/每秒计
+				        var accuracy = res.accuracy; // 位置精度
+				        var map = new BMap.Map("allmap");
+						var point = new BMap.Point(longitude,latitude);
+						var gc = new BMap.Geocoder();
+						localStorage.setItem("point",JSON.stringify(point));
+						gc.getLocation(point, function(rs){
+						    var addComp = rs.addressComponents;
+					   		$city = addComp.city;
+					   		sessionStorage.setItem('gps',$city);
+					   		$('.location-area').text($city);
+						});
+						console.log('1');
+				    },
+				    //取消定位
+				    cancel: function (res) {
+				    	location.href = "html/cityselect.html";
+						console.log('2');
+				    },
+				    //定位失败
+				    fail: function () {
+				        location.href = "html/cityselect.html";
+						console.log('3');
+				    }
+				});
+				wx.error(function(res){
+					location.href = "html/cityselect.html";
+					console.log('4');
+			    });
+			});
+		}else{
+			$('.location-area').text(local);
+			alert(local);
+		}
+		//跳转
+		$('.location-area').on('click',function(){
+			location.href = "html/cityselect.html";
+		});
+	});
+	</script>
+</html>
